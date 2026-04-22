@@ -292,3 +292,92 @@ test.describe('CT-API-010: Deletar Livro', () => {
 
 });
 
+/////////////////////CT-API-011: Obter Estatísticas da Biblioteca/////////////////////////////
+
+test.describe('CT-API-011: Obter Estatísticas da Biblioteca', () => {
+
+  test('Deve retornar estatísticas corretas', async ({ request }) => {
+    const responseLivros = await request.get('/livros');
+    const livros = await responseLivros.json();
+
+    const somaPaginas = livros.reduce((acc, livro) => acc + livro.paginas, 0);
+
+    const response = await request.get('/estatisticas');
+
+    expect(response.status()).toBe(200);
+
+    const body = await response.json();
+
+    expect(body).toHaveProperty('totalLivros');
+    expect(body).toHaveProperty('totalPaginas');
+    expect(body).toHaveProperty('totalUsuarios');
+
+    expect(body.totalLivros).toBeGreaterThanOrEqual(0);
+    expect(body.totalPaginas).toBeGreaterThanOrEqual(0);
+    expect(body.totalUsuarios).toBeGreaterThanOrEqual(0);
+
+    expect(body.totalPaginas).toBe(somaPaginas);
+  });
+
+});
+////////////////////////////CT-API-012: Adicionar Livro aos Favoritos ////////////////////////////////
+
+test.describe('CT-API-012: Adicionar Livro aos Favoritos', () => {
+
+  test('Deve adicionar um livro aos favoritos do usuário', async ({ request }) => {
+    const payload = {
+      usuarioId: 1,
+      livroId: 1
+    };
+
+    const response = await request.post('/favoritos', { data: payload });
+
+    expect(response.status()).toBe(201);
+
+    const body = await response.json();
+
+    expect(body.mensagem).toBe("Livro adicionado aos favoritos");
+  });
+
+});
+////////////////////////////CT-API-013: Listar Favoritos de Usuário ////////////////////////////////
+
+test.describe('CT-API-013: Listar Favoritos de Usuário', () => {
+
+  test('Deve retornar apenas os livros favoritados pelo usuário 1', async ({ request }) => {
+
+    // 1. Garantir que existe pelo menos 1 favorito do usuário 1
+    await request.post('/favoritos', {
+      data: { usuarioId: 1, livroId: 1 }
+    });
+
+    // 2. Buscar favoritos do usuário 1
+    const response = await request.get('/favoritos/1');
+
+    expect(response.status()).toBe(200);
+
+    const favoritos = await response.json();
+
+    // 3. Deve ser array
+    expect(Array.isArray(favoritos)).toBe(true);
+
+    // 4. Validar estrutura de cada livro retornado
+    for (const livro of favoritos) {
+      expect(livro).toHaveProperty('id');
+      expect(livro).toHaveProperty('nome');
+      expect(livro).toHaveProperty('autor');
+      expect(livro).toHaveProperty('paginas');
+      expect(livro).toHaveProperty('descricao');
+      expect(livro).toHaveProperty('imagemUrl');
+      expect(livro).toHaveProperty('dataCadastro');
+    }
+
+    //Validar que todos os livros favoritos são do usuário 1
+    if (favoritos.length > 0 && favoritos[0].usuarioId !== undefined) {
+      for (const livro of favoritos) {
+        expect(livro.usuarioId).toBe(1);
+      }
+    }
+  });
+
+});
