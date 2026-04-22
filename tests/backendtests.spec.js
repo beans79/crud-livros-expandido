@@ -7,7 +7,7 @@ test.describe('CT-API-001: Registro de Novo Usuário (Sucesso)', () => {
 
     const payload = {
       nome: "Maria Silva",
-      email: `maria.silva.${Date.now()}@teste.com`, // garante email único
+      email: `maria.silva.${Date.now()}@teste.com`, // garantir que o email é único
       senha: "senha123"
     };
 
@@ -26,14 +26,14 @@ test.describe('CT-API-001: Registro de Novo Usuário (Sucesso)', () => {
     // 3. Objeto usuario deve existir
     expect(body.usuario).toBeDefined();
 
-    // 4. Validar campos do objeto usuario
+    // 4. Validar os campos do objeto usuario
     expect(body.usuario.nome).toBe(payload.nome);
     expect(body.usuario.email).toBe(payload.email);
 
-    // 5. Campo senha NÃO deve estar presente
+    // 5. Campo da senha NÃO deve estar presente
     expect(body.usuario.senha).toBeUndefined();
 
-    // 6. Validar ID positivo
+    // 6. Validar o ID positivo
     expect(typeof body.usuario.id).toBe("number");
     expect(body.usuario.id).toBeGreaterThan(0);
   });
@@ -55,12 +55,12 @@ test.describe('CT-API-002: Registro com Email Duplicado (Falha)', () => {
       data: payload
     });
 
-    // 1. Status code esperado
+    // 1. Status do code esperado
     expect(response.status()).toBe(400);
 
     const body = await response.json();
 
-    // 2. Mensagem de erro esperada
+    // 2. Mensagem do erro esperado
     expect(body.mensagem).toBe("Email já cadastrado");
   });
 
@@ -86,7 +86,7 @@ test.describe('CT-API-003: Login com Credenciais Válidas', () => {
 
     const body = await response.json();
 
-    // Mensagem
+    // Mensagem esperada
     expect(body.mensagem).toBe("Login realizado com sucesso");
 
     // Objeto usuario sem senha
@@ -131,7 +131,7 @@ test.describe('CT-API-005: Listar Todos os Livros', () => {
 
     const body = await response.json();
 
-    // Deve ser array
+    // Deve ser do tipo array porque uso array.isArray e valido que é true. Se fosse um objeto, seria false.
     expect(Array.isArray(body)).toBe(true);
 
     for (const livro of body) {
