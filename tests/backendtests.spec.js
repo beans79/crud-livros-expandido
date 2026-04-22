@@ -1,19 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
 
-/*
-const BASE_URL = 'http://localhost:3000'
-
-
-test('has title', async ({ page }) => {
-  await page.goto('http://localhost:3000');
-
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/CRUD de Livros/);
-});
-*/
-
-
 test.describe('CT-API-001: Registro de Novo Usuário (Sucesso)', () => {
 
   test('Deve registrar um novo usuário com dados válidos', async ({ request }) => {
