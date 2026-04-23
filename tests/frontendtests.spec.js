@@ -1,16 +1,104 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
 
+const BASE = 'http://localhost:3000';
+
+/*
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => localStorage.clear());
+});
+*/
 //////teste do login//// ver se funciona o login com email e senha corretos, e se aparece a mensagem de sucesso, e se o objeto usuario é retornado sem a senha
-test('test', async ({ page }) => {
-  await page.goto('http://localhost:3000/login.html');
-  await page.getByRole('textbox', { name: 'Email:' }).click();
-  await page.getByRole('textbox', { name: 'Email:' }).fill('admin@biblioteca.com');
-  await page.getByRole('textbox', { name: 'Senha:' }).click();
-  await page.getByRole('textbox', { name: 'Senha:' }).fill('123456');
-  page.once('dialog', dialog => {
-    console.log(`Dialog message: ${dialog.message()}`);
-    dialog.dismiss().catch(() => {});
-  });
-  await page.getByRole('button', { name: 'Entrar' }).click();
+
+test.describe('CT-FE-001: Fluxo Completo de Registro  (Sucesso)', () => {
+    test('Validar criação de conta de novo usuário', async ({ page }) => {
+        await page.goto(`${BASE}/login.html`);
+        await page.getByRole('textbox', { name: 'Email:' }).click();
+        await page.getByRole('textbox', { name: 'Email:' }).fill('admin@biblioteca.com');
+        await page.getByRole('textbox', { name: 'Senha:' }).click();
+        await page.getByRole('textbox', { name: 'Senha:' }).fill('123456');
+        page.once('dialog', dialog => {
+            console.log(`Dialog message: ${dialog.message()}`);
+            dialog.dismiss().catch(() => { });
+        });
+        await page.getByRole('button', { name: 'Entrar' }).click();
+    });
+
+});
+
+///////////////////////////////CT-FE-002: Validação de Senhas Não Correspondentes///////////////////////
+
+test.describe('CT-FE-002: Validação de Senhas Não Correspondentes ', () => {
+    test(' Validar mensagem de erro quando senhas não coincidem', async ({ page }) => {
+        await page.goto(`${BASE}/registro.html`);
+
+        await page.getByRole('textbox', { name: 'Nome:' }).click();
+        await page.getByRole('textbox', { name: 'Nome:' }).fill('midas');
+        await page.getByRole('textbox', { name: 'Email:' }).click();
+        await page.getByRole('textbox', { name: 'Email:' }).fill('midas@noemail.com');
+        await page.getByRole('textbox', { name: 'Senha:', exact: true }).click();
+        await page.getByRole('textbox', { name: 'Senha:', exact: true }).fill('123');
+        await page.getByRole('textbox', { name: 'Confirmar Senha:' }).click();
+        await page.getByRole('textbox', { name: 'Confirmar Senha:' }).fill('123456');
+        await page.getByRole('button', { name: 'Registrar' }).click();
+        await page.click('button:has-text("Registrar")');
+        page.on('dialog', async dialog => {
+            expect(dialog.message()).toBe('As senhas não coincidem!');
+            await dialog.accept();
+        });
+
+        await expect(page).toHaveURL(`${BASE}/registro.html`);
+    });
+});
+
+
+/////////////////////CT-FE-003: Login com Sucesso///////////////////////
+test.describe('CT-FE-003: Login com Sucesso', () => {
+    test('Validar fluxo de autenticação bem-sucedida', async ({ page }) => {
+        await page.goto(`${BASE}/login.html`);
+        await page.getByRole('textbox', { name: 'Email:' }).click();
+        await page.getByRole('textbox', { name: 'Email:' }).fill('admin@biblioteca.com');
+        await page.getByRole('textbox', { name: 'Senha:' }).click();
+        await page.getByRole('textbox', { name: 'Senha:' }).fill('123456');
+        await page.getByRole('button', { name: 'Entrar' }).click();
+        page.once('dialog', dialog => {
+            console.log(`Dialog message: ${dialog.message()}`);
+            dialog.dismiss().catch(() => { });
+        });
+
+
+        await expect(page).toHaveURL(`${BASE}/dashboard.html`);
+
+
+    });
+});
+
+
+test.describe('CT-FE-004: Login com Credenciais Inválidas', () => {
+    test('Validar tratamento de erro de autenticação', async ({ page }) => {
+        await page.goto(`${BASE}/login.html`);
+        await page.getByRole('textbox', { name: 'Email:' }).click();
+        await page.getByRole('textbox', { name: 'Email:' }).fill('admin@biblioteca.com');
+        await page.getByRole('textbox', { name: 'Senha:' }).click();
+        await page.getByRole('textbox', { name: 'Senha:' }).fill('1234589');
+        await page.getByRole('button', { name: 'Entrar' }).click();
+        page.once('dialog', dialog => {
+            console.log(`Dialog message: ${dialog.message()}`);
+            dialog.dismiss().catch(() => { });
+        });
+
+        await expect(page).toHaveURL(`${BASE}/login.html`);
+        page.on('dialog', async dialog => {
+            expect(dialog.message()).toBe('Email ou senha incorretos');
+            //await dialog.accept();
+        });
+    });
+});
+
+test.describe('CT-FE-005: Verificar Proteção de Rotas', () => {
+test(' Validar que páginas protegidas exigem autenticação ', async ({ page }) => {
+  await page.goto(`${BASE}/dashboard.html`);
+
+  await expect(page).toHaveURL(`${BASE}/login.html`);
+});
 });
