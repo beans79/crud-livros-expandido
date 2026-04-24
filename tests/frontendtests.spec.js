@@ -96,9 +96,66 @@ test.describe('CT-FE-004: Login com Credenciais Inválidas', () => {
 });
 
 test.describe('CT-FE-005: Verificar Proteção de Rotas', () => {
-test(' Validar que páginas protegidas exigem autenticação ', async ({ page }) => {
-  await page.goto(`${BASE}/dashboard.html`);
+    test(' Validar que páginas protegidas exigem autenticação ', async ({ page }) => {
+        await page.goto(`${BASE}/dashboard.html`);
 
-  await expect(page).toHaveURL(`${BASE}/login.html`);
+        await expect(page).toHaveURL(`${BASE}/login.html`);
+    });
 });
+
+
+//////////////////////CT-FE-006 — Visualizar Dashboard//////////////////////    
+
+test.describe('CT-FE-006: Visualizar Dashboard', () => {
+    test('Validar carregamento correto do dashboard', async ({ page }) => {
+
+        // Pré-condição: usuário autenticado
+        await page.addInitScript(() => {
+            localStorage.setItem('usuario', JSON.stringify({ nome: 'Admin' }));
+        });
+
+        await page.goto(`${BASE}/dashboard.html`);
+
+        // --- Validação dos cards de estatísticas ---
+        await expect(page.getByRole('heading', { name: 'Total de Livros' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Total de Páginas' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Usuários Cadastrados' })).toBeVisible();
+
+        // Validação dos valores numéricos (devem existir e ser números)
+        //const totalLivros = await page.locator('#totalLivros').innerText();
+
+        const totallivros = page.locator('.stat-card', { hasText: 'Total de Livros' }).locator('.number');
+        const valorLivros = Number((await totallivros.innerText()).replace(/\D/g, ''));
+        expect(valorLivros).toBeGreaterThan(0);
+
+
+        const paginas = page.locator('.stat-card', { hasText: 'Total de Páginas' }).locator('.number');
+        const valorPaginas = Number((await paginas.innerText()).replace(/\D/g, ''));
+        expect(valorPaginas).toBeGreaterThan(0);
+
+
+        const usuarios = page.locator('.stat-card', { hasText: 'Usuários Cadastrados' }).locator('.number');
+        const valorUsuarios = Number((await usuarios.innerText()).replace(/\D/g, ''));
+        expect(valorUsuarios).toBeGreaterThan(0);
+
+
+        // --- Grid de "Últimos Livros Adicionados" é carregado  ---
+        await expect(page.locator('#livros-recentes')).toBeVisible();
+
+
+        // Máximo de 5 livros recentes são exibidos 
+        const livrosCarregados = await page.locator('#livros-recentes').evaluate(el => el.childElementCount);
+        expect(livrosCarregados).toBeLessThanOrEqual(5);
+
+
+
+        // Cada card de livro contém imagem, nome e autor
+        for (let i = 0; i < livrosCarregados; i++) {
+            const card = page.locator('.book-card').nth(i);
+
+            await expect(card.locator('img')).toBeVisible();
+            await expect(card.locator('p:has-text("Autor:")')).toBeVisible();
+            await expect(card.locator('p:has-text("Páginas:")')).toBeVisible();
+        }
+    });
 });
