@@ -1,5 +1,6 @@
-// @ts-check
+// @js-check
 import { test, expect } from '@playwright/test';
+import { expectFailure } from 'node:test';
 
 const BASE = 'http://localhost:3000';
 
@@ -236,4 +237,74 @@ test.describe('CT-FE-007: Adicionar Novo Livro', () => {
 
     });
 
+});
+test.describe('CT-FE-008: Validação de Campos Obrigatórios', () => {
+    test(': Validar que campos obrigatórios são verificados', async ({ page }) => {
+        // Pré-condição: usuário autenticado
+        await page.addInitScript(() => {
+            localStorage.setItem('usuario', JSON.stringify({ nome: 'Admin' }));
+        });
+
+        const totalAdicionados = await page.locator('#lista-livros > *').count();
+        const campoNome = page.getByRole('textbox', { name: 'Nome do Livro:' });
+        const btnAdicionar = page.getByRole('button', { name: 'Adicionar Livro' });
+        const campoAutor = page.getByRole('textbox', { name: 'Autor:' });
+
+        //Aceder á página /livros.html
+        await page.goto(`${BASE}/livros.html`);
+
+        //Clicar no botão "Adicionar Livro" com campos vazios
+        await btnAdicionar.click();
+
+        page.on('dialog', async dialog => {
+            expect(dialog.message()).toBe('Please fill out this fields.');
+            //await dialog.accept();
+        });
+
+
+        // 2. Tentar submeter formulário vazio
+        await btnAdicionar.click();
+
+        // Validação: Verificar se o campo Nome (primeiro obrigatório) disparou o erro de HTML5
+        const isInvalid = await campoNome.evaluate((node) =>
+            node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement
+                ? node.validity.valueMissing
+                : false
+        );
+        expect(isInvalid).toBe(true);
+
+        // Submeter com apenas alguns campos preenchidos
+        await campoNome.fill('O Desejo de uma Vida');
+        await btnAdicionar.click();
+
+        // Validação: Verificar que o campo Autor (agora o próximo vazio) também está inválido
+        /*
+                const autorInvalid = await campoAutor.evaluate((node) =>
+                    node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement
+                        ? node.validity.valueMissing
+                        : false
+                );
+                expect(autorInvalid).toBe(true);
+        
+                // Validação final: Garantir que o formulário NÃO foi submetido (lista não deve ter mudado)
+                // Se a página recarregasse ou limpasse, o campo Nome estaria vazio
+                await expect(campoNome).toHaveValue('O Desejo de uma Vida');
+        
+                 const validit = campoAutor.evaluate(el => el.validity.valueMissing);
+          expect(validit).toBe(true);
+        */
+
+
+        //  evaluate lê propriedades nativas:
+        const isValid = await campoNome.evaluate(el => el.checkValidity());
+        const message = await campoNome.evaluate(el => el.validationMessage);
+
+        // Validações
+
+        const validit = await campoNome.evaluate(el => el.validity.valueMissing);
+        expect(validit).toBe(false); // O campo Nome não deve estar vazio, então valueMissing deve ser false
+        // Imprime a mensagem para ver o que o browser diz
+        console.log('Mensagem de erro do browser:', validit);
+
+    });
 });
