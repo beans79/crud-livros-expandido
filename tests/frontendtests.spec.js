@@ -159,3 +159,81 @@ test.describe('CT-FE-006: Visualizar Dashboard', () => {
         }
     });
 });
+
+//////////////////////CT-FE-007: Adicionar Novo Livro//////////////////////    
+
+test.describe('CT-FE-007: Adicionar Novo Livro', () => {
+    test('Validar formulário de cadastro de livro', async ({ page }) => {
+        // Pré-condição: usuário autenticado
+        await page.addInitScript(() => {
+            localStorage.setItem('usuario', JSON.stringify({ nome: 'Admin' }));
+        });
+
+        await page.goto('http://localhost:3000/livros.html');
+        // Dados do livro a ser adicionado
+        const nomeDoLivro = 'O Hobbit';
+        const autorDoLivro = 'J.R.R.Tolkien';
+        const numeroDePaginas = '310';
+        const descricaoDoLivro = 'Livro interessante.' + Date.now();
+        const urlDaImagem = 'https://i.pinimg.com/originals/1b/e3/fe/1be3fe3ee9604392b410efcba2b39d6f.png';
+
+        // Mapeamento dos locators
+        const campoNome = page.getByRole('textbox', { name: 'Nome do Livro:' });
+        const campoAutor = page.getByRole('textbox', { name: 'Autor:' });
+        const campoPaginas = page.getByRole('spinbutton', { name: 'Número de Páginas:' });
+        const campoDescricao = page.getByRole('textbox', { name: 'Descrição:' });
+        const campoUrl = page.getByRole('textbox', { name: 'URL da Imagem:' });
+        const totalAdicionados = await page.locator('#lista-livros > *').count();
+
+        // Preenchimento dos campos com os dados do livro
+        await campoNome.fill(nomeDoLivro);
+        await campoAutor.fill(autorDoLivro);
+        await campoPaginas.fill(numeroDePaginas);
+        await campoDescricao.fill(descricaoDoLivro);
+        await campoUrl.fill(urlDaImagem);
+
+        // Configurar listener para o diálogo de sucesso, 
+        // garante que o playwright capture o evento correctamente
+        page.once('dialog', async dialog => {
+            expect(dialog.message()).toBe('Livro adicionado com sucesso!');
+            await dialog.accept();
+        });
+
+        // Ação: Clicar no botão "Adicionar Livro"
+        await page.getByRole('button', { name: 'Adicionar Livro' }).click();
+
+        // Validar se todos os campos ficaram vazios
+        await expect(campoNome).toHaveValue('');
+        await expect(campoAutor).toHaveValue('');
+        await expect(campoPaginas).toHaveValue('');
+        await expect(campoDescricao).toHaveValue('');
+        await expect(campoUrl).toHaveValue('');
+
+        // Localizo o primeiro elemento filho dentro da lista do childElementCount ( ver nas properties)
+        const primeiroLivro = page.locator('#lista-livros > *').first();
+
+        // Valido se o texto do primeiro elemento contém o título esperado
+        await expect(primeiroLivro).toContainText(nomeDoLivro);
+
+        // Validar o número total de elementos na lista de livros, após ter sido adicionado um livro.
+        const totalAposAdicionar = await page.locator('#lista-livros > *').count();
+        expect(totalAposAdicionar).toBe(totalAdicionados + 1); // Compara o valor atual de livros carregados 
+        // com o valor antes de adicionr o livro
+
+        // Validar se a url /livros.html aparece após adicionar o livro
+        await expect(page).toHaveURL(/.*livros.html/);
+        //Validar os campos do formulário Adicionar Livro estão visiveis.
+        await expect(campoNome).toBeVisible();
+        await expect(campoAutor).toBeVisible();
+        await expect(campoPaginas).toBeVisible();
+        await expect(campoDescricao).toBeVisible();
+        await expect(campoUrl).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Adicionar Livro' })).toBeVisible();
+        //validar se a lista de Livros está visivel e se o total de livros é superior a Zero.
+        await expect(page.locator('#lista-livros')).toBeVisible();
+        await expect(page.locator('#lista-livros > *').first()).toBeVisible();
+        expect(totalAposAdicionar).not.toBeLessThan(0);
+
+    });
+
+});
