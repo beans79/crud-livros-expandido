@@ -357,3 +357,61 @@ test.describe('CT-FE-009: Navegação Entre Páginas', () => {
     });
 
 });
+
+test.describe('CT-FE-010: Visualizar Detalhes de Livro', () => {
+
+    test('Validar página de detalhes do livro', async ({ page }) => {
+        // Pré-condição: Usuário autenticado
+        await page.addInitScript(() => {
+            localStorage.setItem('usuario', JSON.stringify({ nome: 'Admin' }));
+        });
+
+        //Aceder a /livros.html
+        await page.goto(`${BASE}/livros.html`);
+
+        // --- VALIDAÇÕES ---
+
+        // • Redirecionamento para /detalhes.html?id=1
+        await page.goto(`${BASE}/detalhes.html?id=1`);
+        // • Redirecionamento para /detalhes.html?id=1
+        await expect(page).toHaveURL(/.*detalhes.html\?id=1/);
+
+        //Localiza a imagem dentro da div específica
+        const imagem = page.locator('div.book-image img');
+
+        //Valida se está visível
+        await expect(imagem).toBeVisible();
+
+        //Valida se tem o SRC e o ALT corretos
+        await expect(imagem).toHaveAttribute('src', 'https://exemplo.com/nova-imagem.jpg');
+        await expect(imagem).toHaveAttribute('alt', 'Clean Code - Edição Atualizada');
+
+
+        // Valida se todos os campos (nome, autor, páginas, descrição, data) são exibidos
+        // Validamos a existência das labels e os seus valores 
+        await expect(page.getByRole('heading', { name: 'Clean Code - Edição Atualizada' })).toBeVisible();
+        await expect(page.getByText('Autor:')).toBeVisible();
+        await expect(page.getByText(/Autor: Robert C. Martin/i)).toBeVisible();
+        await expect(page.getByText('Páginas:')).toBeVisible();
+        await expect(page.getByText(/Páginas: 464/i)).toBeVisible();
+        await expect(page.getByText('Descrição:')).toBeVisible();
+        await expect(page.getByText('Descrição: Guia completo')).toBeVisible();
+        await expect(page.getByText('Data de Cadastro:')).toBeVisible();
+        await expect(page.getByText(/Data de Cadastro:/i)).toBeVisible();
+        
+        //Os Botões de ação estão visíveis
+        const btnVoltar = page.locator('button.btn-secondary');
+        const BtnFavoritos = page.locator('button.btn.btn-primary');
+        const btnDeletarLivro = page.locator('button.btn.btn-danger');
+        await expect(btnVoltar).toBeVisible();
+        await expect(BtnFavoritos).toBeVisible();
+        await expect(btnDeletarLivro).toBeVisible();
+
+        
+        // Validar funcionalidade (Botão funcional)
+        await btnVoltar.click();
+        await expect(page).toHaveURL(/.*livros.html/);
+    });
+
+
+});
