@@ -262,7 +262,7 @@ test.describe('CT-FE-008: Validação de Campos Obrigatórios', () => {
         });
 
 
-        // 2. Tentar submeter formulário vazio
+        // Tentar submeter formulário vazio
         await btnAdicionar.click();
 
         // Validação: Verificar se o campo Nome (primeiro obrigatório) disparou o erro de HTML5
@@ -307,4 +307,53 @@ test.describe('CT-FE-008: Validação de Campos Obrigatórios', () => {
         console.log('Mensagem de erro do browser:', validit);
 
     });
+});
+
+test.describe('CT-FE-009: Navegação Entre Páginas', () => {
+
+    test('Validar funcionamento dos links de navegação', async ({ page }) => {
+
+        // Capturar os erros do console.
+        //Definio o array ANTES de qualquer uso
+        const errosNoConsole = [];
+
+        //Configuro o listener para capturar erros
+        page.on('console', msg => {
+            if (msg.type() === 'error') {
+                errosNoConsole.push(msg.text());
+            }
+        });
+
+        // Pré-condição: usuário autenticado
+        await page.addInitScript(() => {
+            localStorage.setItem('usuario', JSON.stringify({ nome: 'Admin' }));
+        });
+
+        //Mapeamento da variaveis dos links de navegação
+        const linkDashboard = await page.getByRole('link', { name: 'Dashboard' });
+        const linkGerenciarLivros = await page.getByRole('link', { name: 'Gerenciar Livros' });
+        const linkFavoritos = page.getByRole('link', { name: 'Meus Favoritos' });
+
+        //Aceder ao link Dashboard
+        await page.goto(`${BASE}/dashboard.html`);
+        // Aceder ao link  Livros
+        await linkGerenciarLivros.click();
+        await expect(page).toHaveURL(`${BASE}/livros.html`);
+
+        // Aceder ao link Favoritos
+        await linkFavoritos.waitFor({ state: 'visible' });
+        await linkFavoritos.click()
+        await page.waitForLoadState('domcontentloaded'); //Aguarda o carregamento da página, assim não dá erro.
+        await expect(page).toHaveURL(/.*favoritos.html/);
+
+        // Valida se volta para o dashboard.
+        await linkDashboard.click();
+        await expect(page).toHaveURL(`${BASE}/dashboard.html`);
+
+        // Validar que não houve erros de console. Utilizo um console.log para ver os erros, caso ocorram.
+        expect(errosNoConsole).toHaveLength(0);
+        console.log('Erros de console capturados durante o teste:', errosNoConsole);
+
+    });
+
 });
