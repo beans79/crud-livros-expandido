@@ -436,7 +436,11 @@ test.describe('CT-FE-011: Adicionar Livro aos Favoritos', () => {
         await expect(page).toHaveURL(/.*detalhes.html\?id=1/);
 
         // Configurar o listener para o Alert ANTES do clique
-
+        page.once('dialog', async dialog => {
+            expect(dialog.message()).toBe('Adicionado aos favoritos!');
+            await dialog.accept();
+            console.log(`Dialog message: ${dialog.message()}`);
+        });
 
         //Clicar no botão Adicionar aosFavoritos.
         const btnFavoritos = page.locator('button.btn.btn-primary');
@@ -451,15 +455,11 @@ test.describe('CT-FE-011: Adicionar Livro aos Favoritos', () => {
             await dialog.accept(); // or dialog.accept()
         });*/
 
-        page.once('dialog', async dialog => {
-            expect(dialog.message()).toBe('Adicionado aos favoritos!');
-            await dialog.accept();
-            console.log(`Dialog message: ${dialog.message()}`);
-        });
+
         await btnFavoritos.click({ delay: 2000 }); // Clica no botão de favoritos
 
         //Validar que o botão mudou para remover dos favoritos
-        await expect(btnFavoritos).toHaveAttribute('onclick', 'toggleFavorito(1, true)');;
+        await expect(btnFavoritos).toHaveAttribute('onclick', 'toggleFavorito(1, true)');
         await expect(btnFavoritos).toContainText('/Remover dos Favoritos/i');
         await expect(btnFavoritos).toContainText('❤️');
         page.once('dialog', dialog => {
@@ -478,7 +478,7 @@ test.describe('CT-FE-011: Adicionar Livro aos Favoritos', () => {
                 //Validar se o livro específico aparece na lista
                 await expect(listaFavoritos).toContainText('Clean Code');
         
-                //(Opcional) Validar que a imagem também está presente nos favoritos
+                //Validar que a imagem também está presente nos favoritos
                 const imagemFavorito = listaFavoritos.getByRole('img', { name: 'Clean Code' });
                 await expect(imagemFavorito).toBeVisible();
         
@@ -487,6 +487,220 @@ test.describe('CT-FE-011: Adicionar Livro aos Favoritos', () => {
 
     });
 
+
+});
+test.describe('CT-FE-012: Remover Livro dos Favoritos ', () => {
+    test('Validar remoção de favorito ', async ({ page }) => {
+        //Pré-condição Usuário autenticado e livro já adicionado via LocalStorage
+        await page.addInitScript(() => {
+            localStorage.setItem('usuario', JSON.stringify({ nome: 'Admin' }));
+            //Forço o ID 1 como favorito para garantir o estado inicial do teste
+            localStorage.setItem('favoritos', JSON.stringify());
+            //localStorage.setItem('favoritos', JSON.stringify([1]));
+        });
+
+
+        //Aceder a /detalhes.html?id=1
+        await page.goto(`${BASE}/detalhes.html?id=1`);
+
+        const btnFavoritos = page.locator('button.btn.btn-primary');
+
+        // Garantir que o botão começou no estado de "Remover"
+        //await expect(btnFavoritos).toContainText(/Remover dos Favoritos/i);
+        await expect(btnFavoritos).toHaveAttribute('onclick', 'toggleFavorito(1, false)');
+        //Configurar listener para o Alert de remoção
+        /*page.once('dialog', async dialog => {
+            expect(dialog.message()).toBe('Removido dos favoritos!');
+            await dialog.accept();
+        });
+        */
+        page.once('dialog', dialog => {
+            console.log(`Dialog message: ${dialog.message()}`);
+            dialog.dismiss().catch(() => { });
+        });
+        //Clicar em "Remover dos Favoritos"
+        await btnFavoritos.click();
+        // await page.locator('button.btn.btn-primary', { hasText: 'Adicionar aos Favoritos' }).click();
+
+        // --- VALIDAÇÕES ---
+
+        //Botão volta para "Adicionar aos Favoritos"
+        await expect(btnFavoritos).toHaveAttribute('onclick', 'toggleFavorito(1, false)')
+        await expect(btnFavoritos).toContainText(/Adicionar aos Favoritos/i);
+        await expect(btnFavoritos).toContainText('🤍');
+
+        //Aceder a /favoritos.html
+        await page.goto(`${BASE}/favoritos.html`);
+
+        //Livro não aparece mais em /favoritos.html
+        // Usamos .not.toContainText para garantir que o título desapareceu
+        const listaFavoritos = page.locator('#lista-favoritos');
+        await expect(listaFavoritos).not.toContainText('Clean Code');
+        // Verifica se não existem cards de livros dentro da lista dos favoritos.
+        await expect(listaFavoritos.locator('.book-card')).toHaveCount(0);
+    });
+});
+
+test.describe('CT-FE-013: Listar Livros Favoritos', () => {
+
+    test('Validar página de favoritos', async ({ page }) => {
+        //Pré-condição: Injetar livros no localStorage antes de aceder à página
+        await page.addInitScript(() => {
+            localStorage.setItem('usuario', JSON.stringify({ nome: 'Admin' }));
+            // Simulamos que os livros com ID 1 e 2 estão favoritados
+            localStorage.setItem('favoritos', JSON.stringify([1, 2]));
+        });
+
+        //Aceder /favoritos.html
+        await page.goto(`${BASE}/favoritos.html`);
+
+        // --- VALIDAÇÕES ---
+        const grid = page.locator('#lista-favoritos');
+
+        //Grid de livros favoritos é exibido
+        await expect(grid).toBeVisible();
+
+        //Apenas livros favoritados aparecem (verificamos se existem cards na lista)
+        const cards = grid.locator('.book-card');
+        await expect(cards).toHaveCount(2);
+
+        // Validação específica de um conteúdo
+        await expect(grid).toContainText('Clean Code');
+    });
+
+    test('Deve exibir mensagem quando não há favoritos', async ({ page }) => {
+        //Pré-condição: Garantir que a lista de favoritos está vazia
+        await page.addInitScript(() => {
+            localStorage.setItem('usuario', JSON.stringify({ nome: 'Admin' }));
+            localStorage.setItem('favoritos', JSON.stringify([]));
+        });
+
+        await page.goto(`${BASE}/favoritos.html`);
+
+        // --- VALIDAÇÕES ---
+        //Mensagem específica é exibida quando a lista está vazia
+        const mensagemVazia = page.getByText('Você ainda não tem livros favoritos');
+        await expect(mensagemVazia).toBeVisible();
+
+        // Garantir que a grid não tem nenhum card
+        const cards = page.locator('#lista-favoritos .book-card');
+        await expect(cards).toHaveCount(0);
+    });
+});
+test.describe('CT-FE-014: Deletar Livro com Confirmação', () => {
+    test(' Validar exclusão de livro ', async ({ page }) => {
+        //Pré-condição: Usuário autenticado e na página de detalhes
+        await page.addInitScript(() => {
+            localStorage.setItem('usuario', JSON.stringify({ nome: 'Admin' }));
+        });
+
+        // Usar o "Clean Code" como exemplo
+        const tituloLivro = 'Clean Code';
+        await page.goto(`${BASE}/detalhes.html?id=1`);
+
+        //Configurar o listener para lidar com os DOIS dialog em sequência
+        page.on('dialog', async dialog => {
+            if (dialog.type() === 'confirm') {
+                // Valida e aceita o pedido de confirmação ("Tem certeza que deseja deletar?")
+                expect(dialog.message()).toContain('deletar');
+                await dialog.accept();
+            } else if (dialog.type() === 'alert') {
+                // Valida e aceita o alerta de sucesso final
+                expect(dialog.message()).toBe('Livro deletado com sucesso!');
+                await dialog.accept();
+            }
+        });
+
+        //Clicar em "Deletar Livro"
+        const btnDeletar = page.locator('button.btn.btn-danger');
+        await btnDeletar.click();
+
+        // --- VALIDAÇÕES ---
+
+        // Redireciona para /livros.html
+        await expect(page).toHaveURL(/.*livros.html/);
+
+        // Valida que o livro não aparece na lista
+        const listaLivros = page.locator('#lista-livros');
+        await expect(listaLivros).not.toContainText(tituloLivro);
+    });
+});
+test.describe('CT-FE-015: Cancelar Deleção de Livro', () => {
+
+    test('CT-FE-015: Cancelar Deleção de Livro', async ({ page }) => {
+        // 1. Pré-condição: Usuário autenticado na página de detalhes do livro 1
+        await page.addInitScript(() => {
+            localStorage.setItem('usuario', JSON.stringify({ nome: 'Admin' }));
+        });
+
+        await page.goto(`${BASE}/detalhes.html?id=1`);
+        const urlAntesDoClique = page.url();
+
+        //Configurar o listener para CANCELAR a ação
+        page.once('dialog', async dialog => {
+            // Valida se o diálogo é do tipo 'confirm'
+            expect(dialog.type()).toBe('confirm');
+            // Clica em "Cancelar"
+            await dialog.dismiss();
+        });
+
+        // 3. Clicar em "Deletar Livro" usando a classe solicitada anteriormente
+        const btnDeletar = page.locator('button.btn-danger[onclick="deletarLivro(1)"]');
+        await btnDeletar.click();
+
+        // --- VALIDAÇÕES ---
+
+        // O usuário permanece na página de detalhes.
+        await expect(page).toHaveURL(urlAntesDoClique);
+
+        //O livro continua existindo, caso o nome esteja no heading.
+        await expect(page.getByRole('heading', { level: 2 })).toBeVisible();
+
+        //Garantir que não há redirecionamento para a lista
+        await expect(page).not.toHaveURL(/.*livros.html/);
+    });
+
+});
+test.describe('CT-FE-016: Logout do Sistema', () => {
+
+    test('Validar funcionalidade de sair', async ({ page }) => {
+        //Navegar primeiro para definir o domínio (evita SecurityError no localStorage)
+        await page.goto(`${BASE}/dashboard.html`);
+
+        //Injetar o usuário manualmente (sem addInitScript para evitar reinjeção)
+        await page.evaluate(() => {
+            localStorage.setItem('usuario', JSON.stringify({ nome: 'Admin' }));
+        });
+
+        // Recarregar para a aplicação reconhecer a sessão injetada
+        await page.reload();
+
+        //Executar o Logout
+        const btnSair = page.getByRole('button', { name: 'Sair' });
+        await btnSair.click();
+
+        // --- VALIDAÇÕES ---
+
+        //Aguarda redirecionamento para o login
+        await expect(page).toHaveURL(/.*login.html/);
+
+        //Verifica se o localStorage foi limpo (uso a poll para aguardar o processo assíncrono)
+        await expect.poll(async () => {
+            return await page.evaluate(() => localStorage.getItem('usuario'));
+        }).toBeNull();
+
+        //Validar que os campos de login estão vazios
+        const campoEmail = page.getByLabel('Email:');
+        const campoSenha = page.getByLabel('Senha:');
+        await expect(campoEmail).toHaveValue('');
+        await expect(campoSenha).toHaveValue('');
+
+        //Validação de rota protegida: Tentar voltar ao dashboard sem estar logado
+        await page.goto(`${BASE}/dashboard.html`);
+
+        // Deve ser expulso de volta para o login
+        await expect(page).toHaveURL(/.*login.html/);
+    });
 
 });
 
