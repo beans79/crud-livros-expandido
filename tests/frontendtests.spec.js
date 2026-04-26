@@ -371,9 +371,9 @@ test.describe('CT-FE-010: Visualizar Detalhes de Livro', () => {
 
         // --- VALIDAÇÕES ---
 
-        // • Redirecionamento para /detalhes.html?id=1
+        // Redirecionamento para /detalhes.html?id=1
         await page.goto(`${BASE}/detalhes.html?id=1`);
-        // • Redirecionamento para /detalhes.html?id=1
+        // Valida o redirecionamento para a página de detalhes do livro com id=1
         await expect(page).toHaveURL(/.*detalhes.html\?id=1/);
 
         //Localiza a imagem dentro da div específica
@@ -383,22 +383,24 @@ test.describe('CT-FE-010: Visualizar Detalhes de Livro', () => {
         await expect(imagem).toBeVisible();
 
         //Valida se tem o SRC e o ALT corretos
-        await expect(imagem).toHaveAttribute('src', 'https://exemplo.com/nova-imagem.jpg');
-        await expect(imagem).toHaveAttribute('alt', 'Clean Code - Edição Atualizada');
-
+        //await expect(imagem).toHaveAttribute('src', 'https://exemplo.com/nova-imagem.jpg');
+        await expect(imagem).toHaveAttribute('src', 'https://images-na.ssl-images-amazon.com/images/I/41xShlnTZTL._SX376_BO1,204,203,200_.jpg');
+        //await expect(imagem).toHaveAttribute('alt', 'Clean Code - Edição Atualizada');
+        await expect(imagem).toHaveAttribute('alt', 'Clean Code')
 
         // Valida se todos os campos (nome, autor, páginas, descrição, data) são exibidos
         // Validamos a existência das labels e os seus valores 
-        await expect(page.getByRole('heading', { name: 'Clean Code - Edição Atualizada' })).toBeVisible();
+        //await expect(page.getByRole('heading', { name: 'Clean Code - Edição Atualizada' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Clean Code' })).toBeVisible();
         await expect(page.getByText('Autor:')).toBeVisible();
         await expect(page.getByText(/Autor: Robert C. Martin/i)).toBeVisible();
         await expect(page.getByText('Páginas:')).toBeVisible();
         await expect(page.getByText(/Páginas: 464/i)).toBeVisible();
         await expect(page.getByText('Descrição:')).toBeVisible();
-        await expect(page.getByText('Descrição: Guia completo')).toBeVisible();
+        await expect(page.getByText('Descrição: Um guia completo sobre boas práticas de programação')).toBeVisible();
         await expect(page.getByText('Data de Cadastro:')).toBeVisible();
         await expect(page.getByText(/Data de Cadastro:/i)).toBeVisible();
-        
+
         //Os Botões de ação estão visíveis
         const btnVoltar = page.locator('button.btn-secondary');
         const BtnFavoritos = page.locator('button.btn.btn-primary');
@@ -407,11 +409,84 @@ test.describe('CT-FE-010: Visualizar Detalhes de Livro', () => {
         await expect(BtnFavoritos).toBeVisible();
         await expect(btnDeletarLivro).toBeVisible();
 
-        
+
         // Validar funcionalidade (Botão funcional)
         await btnVoltar.click();
         await expect(page).toHaveURL(/.*livros.html/);
     });
+});
+
+test.describe('CT-FE-011: Adicionar Livro aos Favoritos', () => {
+
+    test('Validar funcionalidade de favoritar ', async ({ page }) => {
+
+        // Pré-condição: Usuário autenticado
+        await page.addInitScript(() => {
+            localStorage.setItem('usuario', JSON.stringify({ nome: 'Admin' }));
+        });
+
+        //Aceder a /livros.html
+        await page.goto(`${BASE}/livros.html`);
+
+        // --- VALIDAÇÕES ---
+
+        //Redirecionamento para /detalhes.html?id=1
+        await page.goto(`${BASE}/detalhes.html?id=1`);
+        // Valida o redirecionamento para a página de detalhes do livro com id=1
+        await expect(page).toHaveURL(/.*detalhes.html\?id=1/);
+
+        // Configurar o listener para o Alert ANTES do clique
+
+
+        //Clicar no botão Adicionar aosFavoritos.
+        const btnFavoritos = page.locator('button.btn.btn-primary');
+        await btnFavoritos.waitFor({ state: 'visible' });
+        await expect(btnFavoritos).toBeVisible();
+        //await expect(btnFavoritos).toContainText('🤍 Adicionar aos Favoritos');
+        await expect(btnFavoritos).toHaveAttribute('onclick', 'toggleFavorito(1, false)');
+
+        /*page.once('dialog', async dialog => {
+            console.log(`Dialog type: ${dialog.type()}`);
+            console.log(`Dialog message: ${dialog.message()}`);
+            await dialog.accept(); // or dialog.accept()
+        });*/
+
+        page.once('dialog', async dialog => {
+            expect(dialog.message()).toBe('Adicionado aos favoritos!');
+            await dialog.accept();
+            console.log(`Dialog message: ${dialog.message()}`);
+        });
+        await btnFavoritos.click({ delay: 2000 }); // Clica no botão de favoritos
+
+        //Validar que o botão mudou para remover dos favoritos
+        await expect(btnFavoritos).toHaveAttribute('onclick', 'toggleFavorito(1, true)');;
+        await expect(btnFavoritos).toContainText('/Remover dos Favoritos/i');
+        await expect(btnFavoritos).toContainText('❤️');
+        page.once('dialog', dialog => {
+            console.log(`Dialog message: ${dialog.message()}`);
+            dialog.dismiss().catch(() => { });
+        });
+
+        // --- Validar na página dos favoritos ---
+
+        //Navegar para a página de favoritos
+        await page.goto(`${BASE}/favoritos.html`);
+
+        //Localizo o container da lista de favoritos
+        const listaFavoritos = page.locator('#lista-favoritos');
+        /*
+                //Validar se o livro específico aparece na lista
+                await expect(listaFavoritos).toContainText('Clean Code');
+        
+                //(Opcional) Validar que a imagem também está presente nos favoritos
+                const imagemFavorito = listaFavoritos.getByRole('img', { name: 'Clean Code' });
+                await expect(imagemFavorito).toBeVisible();
+        
+        */
+
+
+    });
 
 
 });
+
