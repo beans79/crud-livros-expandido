@@ -285,6 +285,7 @@ test.describe('CT-API-011: Obter Estatísticas da Biblioteca', () => {
 
   test('Deve retornar estatísticas corretas', async ({ request }) => {
     const responseLivros = await request.get('/livros');
+    /** @type {{ id: number; nome: string; autor: string; paginas: number; descricao: string; imagemUrl: string; dataCadastro: string; usuarioId?: number; }[]} */
     const livros = await responseLivros.json();
 
     const somaPaginas = livros.reduce((acc, livro) => acc + livro.paginas, 0);
