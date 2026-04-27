@@ -9,7 +9,6 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.clear());
 });
 */
-//////teste do login//// ver se funciona o login com email e senha corretos, e se aparece a mensagem de sucesso, e se o objeto usuario é retornado sem a senha
 
 test.describe('CT-FE-001: Fluxo Completo de Registro  (Sucesso)', () => {
     test('Validar criação de conta de novo usuário', async ({ page }) => {
@@ -160,8 +159,7 @@ test.describe('CT-FE-006: Visualizar Dashboard', () => {
         }
     });
 });
-
-//////////////////////CT-FE-007: Adicionar Novo Livro//////////////////////    
+  
 
 test.describe('CT-FE-007: Adicionar Novo Livro', () => {
     test('Validar formulário de cadastro de livro', async ({ page }) => {
@@ -211,7 +209,7 @@ test.describe('CT-FE-007: Adicionar Novo Livro', () => {
         await expect(campoUrl).toHaveValue('');
 
         // Localizo o primeiro elemento filho dentro da lista do childElementCount ( ver nas properties)
-        const primeiroLivro = page.locator('#lista-livros > *').first();
+        const primeiroLivro = page.locator('#lista-livros > *').nth(2);
 
         // Valido se o texto do primeiro elemento contém o título esperado
         await expect(primeiroLivro).toContainText(nomeDoLivro);
@@ -419,18 +417,11 @@ test.describe('CT-FE-010: Visualizar Detalhes de Livro', () => {
 test.describe('CT-FE-011: Adicionar Livro aos Favoritos', () => {
 
     test('Validar funcionalidade de favoritar ', async ({ page }) => {
-        /*
-        // Pré-condição: Usuário autenticado
-        await page.addInitScript(() => {
-            localStorage.setItem('usuario', JSON.stringify({ nome: 'Admin' }));
-        });
-        */
-
 
         //Aceder a /livros.html
         await page.goto(`${BASE}/livros.html`);
 
-        ///Dados de Login.
+        //Dados de Login.
         await page.getByRole('textbox', { name: 'Email:' }).click();
         await page.getByRole('textbox', { name: 'Email:' }).fill('admin@biblioteca.com');
         await page.getByRole('textbox', { name: 'Senha:' }).click();
@@ -501,6 +492,7 @@ test.describe('CT-FE-011: Adicionar Livro aos Favoritos', () => {
 test.describe('CT-FE-012: Remover Livro dos Favoritos ', () => {
     test('Validar remoção de favorito ', async ({ page }) => {
         //Pré-condição Usuário autenticado e livro já adicionado via LocalStorage
+        //Adicionar o livro no favorito.
         await page.addInitScript(() => {
             localStorage.setItem('usuario', JSON.stringify({ nome: 'Admin' }));
             //Forço o ID 1 como favorito para garantir o estado inicial do teste
@@ -553,11 +545,24 @@ test.describe('CT-FE-012: Remover Livro dos Favoritos ', () => {
 test.describe('CT-FE-013: Listar Livros Favoritos', () => {
 
     test('Validar página de favoritos', async ({ page }) => {
-        //Pré-condição: Injetar livros no localStorage antes de aceder à página
-        await page.addInitScript(() => {
-            localStorage.setItem('usuario', JSON.stringify({ nome: 'Admin' }));
-            // Simulamos que os livros com ID 1 e 2 estão favoritados
-            localStorage.setItem('favoritos', JSON.stringify([1, 2]));
+
+
+        //Pré-condição: Adicionar 2 livros previamente nos favoritos.
+
+
+        //Aceder a /livros.html
+        await page.goto(`${BASE}/livros.html`);
+
+        //Dados de Login.
+        await page.getByRole('textbox', { name: 'Email:' }).click();
+        await page.getByRole('textbox', { name: 'Email:' }).fill('admin@biblioteca.com');
+        await page.getByRole('textbox', { name: 'Senha:' }).click();
+        await page.getByRole('textbox', { name: 'Senha:' }).fill('123456');
+        await page.getByRole('button', { name: 'Entrar' }).click();
+
+        page.once('dialog', dialog => {
+            console.log(`Dialog message: ${dialog.message()}`);
+            dialog.dismiss().catch(() => { });
         });
 
         //Aceder /favoritos.html
@@ -638,8 +643,18 @@ test.describe('CT-FE-015: Cancelar Deleção de Livro', () => {
 
     test('CT-FE-015: Cancelar Deleção de Livro', async ({ page }) => {
         // 1. Pré-condição: Usuário autenticado na página de detalhes do livro 1
-        await page.addInitScript(() => {
-            localStorage.setItem('usuario', JSON.stringify({ nome: 'Admin' }));
+        //Aceder a /livros.html
+        await page.goto(`${BASE}/livros.html`);
+        //Dados de Login.
+        await page.getByRole('textbox', { name: 'Email:' }).click();
+        await page.getByRole('textbox', { name: 'Email:' }).fill('admin@biblioteca.com');
+        await page.getByRole('textbox', { name: 'Senha:' }).click();
+        await page.getByRole('textbox', { name: 'Senha:' }).fill('123456');
+        await page.getByRole('button', { name: 'Entrar' }).click();
+
+        page.once('dialog', dialog => {
+            console.log(`Dialog message: ${dialog.message()}`);
+            dialog.dismiss().catch(() => { });
         });
 
         await page.goto(`${BASE}/detalhes.html?id=1`);
