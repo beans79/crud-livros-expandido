@@ -118,6 +118,7 @@ Estes testes simulam a interação real do utilizador no navegador:
 # 🚀 Como Executar
 Instalação de Dependências
 	Primeiro, instala as bibliotecas do Node.js e, em seguida, os executáveis dos browsers que o Playwright utiliza:
+##
 	1. Instalação
 		Bash
 		# npm install
