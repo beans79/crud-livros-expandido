@@ -118,31 +118,31 @@ Estes testes simulam a interação real do utilizador no navegador:
 # 🚀 Como Executar
 Instalação de Dependências
 	Primeiro, instala as bibliotecas do Node.js e, em seguida, os executáveis dos browsers que o Playwright utiliza:
-	1. Instalação
-	Bash
-		npm install
-	3. Instalar os browsers do Playwright (passo obrigatório)
-		npx playwright install
-	4. Iniciar Aplicação
-	Bash
-		npm start
-		App: http://localhost:3000/login.html
+		1. Instalação
+		Bash
+			npm install
+		3. Instalar os browsers do Playwright (passo obrigatório)
+			npx playwright install
+		4. Iniciar Aplicação
+		Bash
+			npm start
+			App: http://localhost:3000/login.html
 
-		API Docs: http://localhost:3000/api-docs
+			API Docs: http://localhost:3000/api-docs
 
-	5. Executar Testes
-	Bash
-	# Executar todos os testes (Frontend + Backend)
-		npx playwright test
+		5. Executar Testes
+		Bash
+		# Executar todos os testes (Frontend + Backend)
+			npx playwright test
 
-	# Executar apenas testes de API
-		npx playwright test tests/backend.spec.js
+		# Executar apenas testes de API
+			npx playwright test tests/backend.spec.js
 
-	# Abrir interface visual do Playwright
-		npx playwright test --ui
-	# Executar testes individualmente:
-		npx playwright test --ui 'nome do caso de teste. ex:
-			npx playwright test --ui 'CT-FE-013: Listar Livros Favoritos'
+		# Abrir interface visual do Playwright
+			npx playwright test --ui
+		# Executar testes individualmente:
+			npx playwright test --ui 'nome do caso de teste. ex:
+				npx playwright test --ui 'CT-FE-013: Listar Livros Favoritos'
 Nota: Deve ter em conta as pré-condições de cada teste.
 Projeto desenvolvido para demonstração de competências em Testes - Armando Teixeira
 
