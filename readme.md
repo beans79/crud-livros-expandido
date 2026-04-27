@@ -118,19 +118,19 @@ Estes testes simulam a interação real do utilizador no navegador:
 # 🚀 Como Executar
 Instalação de Dependências
 	Primeiro, instala as bibliotecas do Node.js e, em seguida, os executáveis dos browsers que o Playwright utiliza:
-		1. Instalação
+	1. Instalação
 		Bash
-			npm install
-		3. Instalar os browsers do Playwright (passo obrigatório)
-			npx playwright install
-		4. Iniciar Aplicação
+		npm install
+	3. Instalar os browsers do Playwright (passo obrigatório)
+		npx playwright install
+	4. Iniciar Aplicação
 		Bash
-			npm start
-			App: http://localhost:3000/login.html
+		npm start
+		App: http://localhost:3000/login.html
 
-			API Docs: http://localhost:3000/api-docs
+		API Docs: http://localhost:3000/api-docs
 
-		5. Executar Testes
+	5. Executar Testes
 		Bash
 		# Executar todos os testes (Frontend + Backend)
 			npx playwright test
