@@ -425,6 +425,7 @@ test.describe('CT-FE-011: Adicionar Livro aos Favoritos', () => {
             localStorage.setItem('usuario', JSON.stringify({ nome: 'Admin' }));
         });
 
+
         //Aceder a /livros.html
         await page.goto(`${BASE}/livros.html`);
 
@@ -436,6 +437,7 @@ test.describe('CT-FE-011: Adicionar Livro aos Favoritos', () => {
         await expect(page).toHaveURL(/.*detalhes.html\?id=1/);
 
         // Configurar o listener para o Alert ANTES do clique
+
         page.once('dialog', async dialog => {
             expect(dialog.message()).toBe('Adicionado aos favoritos!');
             await dialog.accept();
@@ -447,16 +449,17 @@ test.describe('CT-FE-011: Adicionar Livro aos Favoritos', () => {
         await btnFavoritos.waitFor({ state: 'visible' });
         await expect(btnFavoritos).toBeVisible();
         //await expect(btnFavoritos).toContainText('🤍 Adicionar aos Favoritos');
+        page.once('dialog', async dialog => {
+            expect(dialog.message()).toBe('Adicionado aos favoritos!');
+            await dialog.accept();
+            console.log(`Dialog message: ${dialog.message()}`);
+
+        });
         await expect(btnFavoritos).toHaveAttribute('onclick', 'toggleFavorito(1, false)');
 
-        /*page.once('dialog', async dialog => {
-            console.log(`Dialog type: ${dialog.type()}`);
-            console.log(`Dialog message: ${dialog.message()}`);
-            await dialog.accept(); // or dialog.accept()
-        });*/
 
-
-        await btnFavoritos.click({ delay: 2000 }); // Clica no botão de favoritos
+        //await page.click('button:has-text("Adicionar aos Favoritos")');
+        await btnFavoritos.click({ delay: 3000 }); // Clica no botão de favoritos
 
         //Validar que o botão mudou para remover dos favoritos
         await expect(btnFavoritos).toHaveAttribute('onclick', 'toggleFavorito(1, true)');
@@ -664,19 +667,27 @@ test.describe('CT-FE-015: Cancelar Deleção de Livro', () => {
 test.describe('CT-FE-016: Logout do Sistema', () => {
 
     test('Validar funcionalidade de sair', async ({ page }) => {
-        //Navegar primeiro para definir o domínio (evita SecurityError no localStorage)
-        await page.goto(`${BASE}/dashboard.html`);
-
-        //Injetar o usuário manualmente (sem addInitScript para evitar reinjeção)
-        await page.evaluate(() => {
-            localStorage.setItem('usuario', JSON.stringify({ nome: 'Admin' }));
+        await page.goto(`${BASE}/login.html`);
+        ///Dados de Login.
+        await page.getByRole('textbox', { name: 'Email:' }).click();
+        await page.getByRole('textbox', { name: 'Email:' }).fill('admin@biblioteca.com');
+        await page.getByRole('textbox', { name: 'Senha:' }).click();
+        await page.getByRole('textbox', { name: 'Senha:' }).fill('123456');
+        await page.getByRole('button', { name: 'Entrar' }).click();
+        //Fica á escutade qualquer dialog.
+        page.once('dialog', dialog => {
+            console.log(`Dialog message: ${dialog.message()}`);
+            dialog.dismiss().catch(() => { });
         });
+        //Navegar primeiro para definir o domínio 
+        await page.goto(`${BASE}/dashboard.html`);
 
         // Recarregar para a aplicação reconhecer a sessão injetada
         await page.reload();
 
         //Executar o Logout
-        const btnSair = page.getByRole('button', { name: 'Sair' });
+        const btnSair = page.locator('button.nav-btn.logout:has-text("Sair")');
+        await expect(btnSair).toBeVisible();
         await btnSair.click();
 
         // --- VALIDAÇÕES ---
@@ -703,4 +714,3 @@ test.describe('CT-FE-016: Logout do Sistema', () => {
     });
 
 });
-
