@@ -1,6 +1,6 @@
 
 Markdown
-# 📚 Sistema de Gestão de Biblioteca (Full Stack & QA)
+# 📚 Sistema de Gestão de Biblioteca (QA)
 
 Este repositório contém uma aplicação completa de Gestão de Biblioteca, integrando o desenvolvimento de uma **API REST**, uma interface de utilizador dinâmica e uma suíte robusta de **Testes Automatizados (E2E e API)** utilizando Playwright.
 
@@ -31,7 +31,9 @@ crud-livros-expandido/
 │   ├── frontend.spec.js     # 16 Testes E2E (Interface)
 │   └── backend.spec.js      # 13 Testes de API (Endpoints)
 └── public/                  # Frontend Estático
-🧪 Cobertura de Testes Automatizados
+```
+
+# 🧪 Cobertura de Testes Automatizados
 O projeto conta com uma cobertura abrangente dividida em duas frentes:
 
 1. Testes de API (Backend - 13 Casos de Teste)
