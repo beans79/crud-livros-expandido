@@ -120,12 +120,12 @@ Instalação de Dependências
 	Primeiro, instala as bibliotecas do Node.js e, em seguida, os executáveis dos browsers que o Playwright utiliza:
 	1. Instalação
 		Bash
-		npm install
+		# npm install
 	3. Instalar os browsers do Playwright (passo obrigatório)
-		npx playwright install
+		#npm init playwright@latest
 	4. Iniciar Aplicação
 		Bash
-		npm start
+		# npm start
 		App: http://localhost:3000/login.html
 
 		API Docs: http://localhost:3000/api-docs
