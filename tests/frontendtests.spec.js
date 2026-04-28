@@ -717,6 +717,11 @@ test.describe('CT-FE-016: Logout do Sistema', () => {
         await expect(page).toHaveURL(/.*login.html/);
 
         //Limpeza total da localstorage
+        /*
+                await expect.poll(async () => {
+            return await page.evaluate(() => localStorage.getItem('usuario'));
+        }).toBeNull();
+        */
         await expect.poll(() => page.evaluate(() => localStorage.length)).toBe(0);
         await expect.poll(() => page.evaluate(() => sessionStorage.length)).toBe(0);
 
