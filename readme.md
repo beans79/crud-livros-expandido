@@ -145,5 +145,6 @@ Instalação de Dependências
 			npx playwright test --ui 'nome do caso de teste. ex:
 				npx playwright test --ui 'CT-FE-013: Listar Livros Favoritos'
 Nota: Deve ter em conta as pré-condições de cada teste.
+
 Projeto desenvolvido para demonstração de competências em Testes - Armando Teixeira
 
