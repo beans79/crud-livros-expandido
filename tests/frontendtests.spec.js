@@ -159,7 +159,7 @@ test.describe('CT-FE-006: Visualizar Dashboard', () => {
         }
     });
 });
-  
+
 
 test.describe('CT-FE-007: Adicionar Novo Livro', () => {
     test('Validar formulário de cadastro de livro', async ({ page }) => {
@@ -685,53 +685,52 @@ test.describe('CT-FE-015: Cancelar Deleção de Livro', () => {
     });
 
 });
+
 test.describe('CT-FE-016: Logout do Sistema', () => {
 
-    test('Validar funcionalidade de sair', async ({ page }) => {
+    test('Validar funcionalidade de sair', async ({ page, context }) => {
         await page.goto(`${BASE}/login.html`);
-        ///Dados de Login.
-        await page.getByRole('textbox', { name: 'Email:' }).click();
+
+        // Dados de Login
         await page.getByRole('textbox', { name: 'Email:' }).fill('admin@biblioteca.com');
-        await page.getByRole('textbox', { name: 'Senha:' }).click();
         await page.getByRole('textbox', { name: 'Senha:' }).fill('123456');
         await page.getByRole('button', { name: 'Entrar' }).click();
-        //Fica á escuta de qualquer dialog.
+
+        //Fica á escuta de qualquer dialog que aparece.
         page.once('dialog', dialog => {
             console.log(`Dialog message: ${dialog.message()}`);
             dialog.dismiss().catch(() => { });
         });
-        //Navegar primeiro para definir o domínio 
+
+        // Navegar para o dashboard e garantir que está logado
         await page.goto(`${BASE}/dashboard.html`);
+        await expect(page).toHaveURL(/.*dashboard.html/);
 
-        // Recarregar para a aplicação reconhecer a sessão injetada
-        await page.reload();
-
-        //Executar o Logout
+        // Executar o Logout
         const btnSair = page.locator('button.nav-btn.logout:has-text("Sair")');
         await expect(btnSair).toBeVisible();
         await btnSair.click();
 
-        // --- VALIDAÇÕES ---
+        // --- VALIDAÇÕES DE SEGURANÇA ---
 
-        //Aguarda redirecionamento para o login
+        //Redirecionamento para a página login
         await expect(page).toHaveURL(/.*login.html/);
 
-        //Verifica se o localStorage foi limpo (uso a poll para aguardar o processo assíncrono)
-        await expect.poll(async () => {
-            return await page.evaluate(() => localStorage.getItem('usuario'));
-        }).toBeNull();
+        //Limpeza total da localstorage
+        await expect.poll(() => page.evaluate(() => localStorage.length)).toBe(0);
+        await expect.poll(() => page.evaluate(() => sessionStorage.length)).toBe(0);
 
-        //Validar que os campos de login estão vazios
-        const campoEmail = page.getByLabel('Email:');
-        const campoSenha = page.getByLabel('Senha:');
-        await expect(campoEmail).toHaveValue('');
-        await expect(campoSenha).toHaveValue('');
+        //Cookies 
+        const cookies = await context.cookies();
+        // Validação de limpeza de cookies.
+        expect(cookies.length).toBe(0);
 
-        //Validação de rota protegida: Tentar voltar ao dashboard sem estar logado
+        //Interface limpa
+        await expect(page.getByLabel('Email:')).toHaveValue('');
+        await expect(page.getByLabel('Senha:')).toHaveValue('');
+
+        //Validar que não acede á página dashboard, após limpeza. Aparece a a página login.
         await page.goto(`${BASE}/dashboard.html`);
-
-        // Deve ser expulso de volta para o login
         await expect(page).toHaveURL(/.*login.html/);
     });
-
 });
